@@ -2,6 +2,7 @@ from collections import defaultdict
 from math import log
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from datetime import datetime
 
 
 # TODO: Currently all vectors are stored as (string , number) pairs. We could replace this if we use a consitent word->number function
@@ -9,6 +10,10 @@ class Document:
     def __init__(self, text):
         self.text = text  # We don't really need to store this
         self.term_freq = self.preprocess(text)
+
+        self.last_updated = datetime.now()
+        self.tf_idf_vector = None
+        self.magnitude = None
 
     def preprocess(self, string):
         tokens = word_tokenize(string)
@@ -22,12 +27,25 @@ class Document:
             term_freq[token] += 1
         return term_freq
 
+    def update_tf_idf(self, searcher):
+        if (
+            self.tf_idf_vector is None
+            or self.magnitude is None
+            or self.last_updated < searcher.last_updated
+        ):
+            self.tf_idf_vector = searcher._tf_idf_vector(
+                self
+            )  # Note: self is document, not searcher
+            self.magnitude = sum(val**2 for val in self.tf_idf_vector.values()) ** 0.5
+            self.last_updated = datetime.now()
+
 
 class Searcher:
     def __init__(self):
         self.documents = []
         self.total_documents = 0
         self.document_freq = defaultdict(int)
+        self.last_updated = datetime.now()
 
     def add_document(self, text):
         doc = Document(text)
@@ -36,6 +54,7 @@ class Searcher:
 
         for term in doc.term_freq:
             self.document_freq[term] += 1
+        self.last_updated = datetime.now()
         return self.total_documents - 1
 
     def tf(self, term, doc):
@@ -57,6 +76,7 @@ class Searcher:
         if doc_id < 0 or doc_id >= len(self.documents):
             raise ValueError("Invalid document ID")
         doc = self.documents[doc_id]
+        doc.update_tf_idf(self)
         return self._tf_idf_vector(doc)
 
     def _cosine_similarity_internal(self, doc1_tf_idf, doc2_tf_idf):
