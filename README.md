@@ -9,6 +9,6 @@
 - [ ] Make a frontend for the search engine
 
 
-Before Running, run this in ptyhon:
+Before Running, run this in python:
 import nltk
 nltk.download('punkt')
