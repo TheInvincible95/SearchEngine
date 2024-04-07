@@ -1,2 +1,3 @@
 *.json
 myEnv
+*__pycache__*
