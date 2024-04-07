@@ -5,6 +5,8 @@ import csv
 
 
 def getCorpus(filePath):
+    # Converts the corpus to a dictionary with the following format:
+    # document Number : (contents, label)
     corpus = {}
 
     with open(filePath, mode="r") as file:
