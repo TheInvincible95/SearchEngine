@@ -8,6 +8,8 @@
 - [ ] Write indexes to disk
 - [ ] Make a frontend for the search engine
 
+## Corpus Used
+https://www.kaggle.com/datasets/sunilthite/text-document-classification-dataset
 
 Before Running, run this in python:
 import nltk
