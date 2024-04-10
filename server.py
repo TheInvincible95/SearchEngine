@@ -67,10 +67,42 @@ class RequestHandler(BaseHTTPRequestHandler):
                             box-shadow: 0 0 10px rgba(0, 0, 0, 1.0);
                             border-radius: 5px;
                         }
+                        .search-form {
+                            text-align: center;
+                            padding: 20px;
+                        }
+
+                        .search-input {
+                            width: 60%;
+                            padding: 10px;
+                            font-size: 16px;
+                            border: 1px solid #ccc;
+                            border-radius: 5px;
+                            outline: none;
+                        }
+
+                        .search-button {
+                            padding: 10px 20px;
+                            font-size: 16px;
+                            background-color: #4CAF50;
+                            color: #fff;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            transition: background-color 0.3s;
+                        }
+
+                        .search-button:hover {
+                            background-color: #45a049;
+                        }
                     </style>
                 </head>
                 <body>
                     <div class="container">
+                    <form class="search-form" action="#" method="post">
+                        <input type="text" class="search-input" name="query" placeholder="Enter your search query" required>
+                        <button type="submit" class="search-button"><img src="img/magnifying-glass.png" height="16"></button>
+                    </form>
                         <ol class="results">
                 """
             for result in data:
