@@ -155,9 +155,11 @@ def cosineSimilarity(_query):
 
 query = sys.argv[1]
 rating = cosineSimilarity(query)
-sorted_documents = sorted(
-    documents.items(), key=lambda x: rating[x[0]], reverse=True)
+sorted_documents = sorted(documents.items(), key=lambda x: rating[x[0]], reverse=True)
 # print(f"Query:{query}\n")
+
+print("")
 for name, doc in sorted_documents:
     # print(f'Rating:{rating[name] : 3f}\nDocument:"{doc}"')
     print(f"{doc}")
+    print("\\")

@@ -14,7 +14,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         process = subprocess.run(
             ["python", "search_engine.py", data], capture_output=True, text=True
         )
-        output = process.stdout.strip().split("\n")
+        output = process.stdout.split("\\")
         with open("search.json", "w") as f:
             json.dump(output, f, indent=4)
 
@@ -106,13 +106,17 @@ class RequestHandler(BaseHTTPRequestHandler):
                         <ol class="results">
                 """
             for result in data:
-                html_content += f"""
-                            <li>
-                                <div class="result-title">
-                                    <p>{result}</p>
-                                </div>
-                            </li>
-                """
+                if not result == "\n":
+                    title = result.splitlines()[1]
+                    content = "".join(result.splitlines()[2:])
+                    html_content += f"""
+                                <li>
+                                    <div class="result-title">
+                                        <h3>{title}</h3>
+                                        <p>{content}</p>
+                                    </div>
+                                </li>
+                    """
             html_content += """
                         </ol>
                     </div>
