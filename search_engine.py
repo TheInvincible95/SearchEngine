@@ -7,7 +7,9 @@ from math import log
 import json  # For dump
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+
 # from transformers import BertTokenizer # Not used
+import sys
 
 documents = {
     "0": "Artificial intelligence has revolutionized various industries.",
@@ -36,18 +38,18 @@ documents = {
 def preprocess(string):
     tokens = word_tokenize(string)
     tokens = [token.lower() for token in tokens]
-    
+
     # Remove stop words
-    stop_words = set(stopwords.words('english'))
-    tokens = [token for token in tokens if token not in stop_words] 
+    stop_words = set(stopwords.words("english"))
+    tokens = [token for token in tokens if token not in stop_words]
     return tokens
 
 
 totalDocuments = len(documents)
 # This will store (word -> count) where count =no of documents word occurs in
 documentFreq = defaultdict(int)
- # This will store (docName -> dict of term frequencies in that document)
-allTermFreqs = ({}) 
+# This will store (docName -> dict of term frequencies in that document)
+allTermFreqs = {}
 
 for name, doc in documents.items():
     termFreq = defaultdict(
@@ -84,14 +86,16 @@ def IDF(t, docFreq):
     d = docFreq.get(t) or 0
     return log(totalDocuments / (1 + d))
 
+
 # TF Frequency of terms in a document
 # DF No of documents in which a term appears in the corpus
 # Returns Dictionary of words -> TF_IDF score
 def TF_IDF(tf, df):
     tf_idf = defaultdict(int)
     for tok in tf:
-        tf_idf[tok] = TF(tok, tf) * IDF(tok, df) 
-    return tf_idf    
+        tf_idf[tok] = TF(tok, tf) * IDF(tok, df)
+    return tf_idf
+
 
 def addSimilarity(_query):
     _tokens = preprocess(_query)
@@ -107,21 +111,22 @@ def addSimilarity(_query):
 
 def cosineSimilarity(_query):
     from math import sqrt
+
     def magnitude(tf_idf):
         mag = 0
         for term in tf_idf:
-            mag += tf_idf[term]**2
+            mag += tf_idf[term] ** 2
         return sqrt(mag)
-        
+
     _tokens = preprocess(_query)
     termFreq = defaultdict(int)
     for tok in _tokens:
         termFreq[tok] += 1
     _rating = {}
     qTF_IDF = TF_IDF(termFreq, documentFreq)
-    
+
     magnitudeQuery = magnitude(qTF_IDF)
-        
+
     for _name in documents:
         docTermFreq = allTermFreqs[_name]
         dTF_IDF = TF_IDF(docTermFreq, documentFreq)
@@ -130,14 +135,14 @@ def cosineSimilarity(_query):
         for term in qTF_IDF:
             if term in dTF_IDF:
                 dotProduct += qTF_IDF[term] * dTF_IDF[term]
-        _rating[_name] = dotProduct/(magnitudeDocument*magnitudeQuery)
-    return _rating          
-        
+        _rating[_name] = dotProduct / (magnitudeDocument * magnitudeQuery)
+    return _rating
 
-query = "artificial intelligence"
+
+query = sys.argv[1]
 rating = cosineSimilarity(query)
-
 sorted_documents = sorted(documents.items(), key=lambda x: rating[x[0]], reverse=True)
-print(f"Query:{query}\n")
+# print(f"Query:{query}\n")
 for name, doc in sorted_documents:
-    print(f'Rating:{rating[name] : 3f}\nDocument:"{doc}"')
+    # print(f'Rating:{rating[name] : 3f}\nDocument:"{doc}"')
+    print(f"{doc}")
