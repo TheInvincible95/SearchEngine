@@ -105,6 +105,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                             cursor: pointer;
                         }
 
+                        summary:hover h3{
+                            text-decoration: underline;
+                        }
+
                         #scroll-to-top {
                             background-image: url('img/up-arrow.png');
                             position: fixed;
@@ -122,16 +126,38 @@ class RequestHandler(BaseHTTPRequestHandler):
                             background-repeat: no-repeat;
                             background-size: 35px;
                             background-position: center;
+                            box-shadow: 0 0 10px rgba(0, 0, 0, 1.0);
                         }
 
                         #scroll-to-top:hover {
                             background-color: #45A049;
                         }
 
+                        #home {
+                            background-image: url('img/home.png');
+                            position: fixed;
+                            bottom: 20px;
+                            left: 20px;
+                            z-index: 99;
+                            background-color: #4CAF50;
+                            color: white;
+                            border: none;
+                            border-radius: 50%;
+                            padding: 15px;
+                            cursor: pointer;
+                            width: 30px;
+                            height: 30px;
+                            background-repeat: no-repeat;
+                            background-size: 35px;
+                            background-position: center;
+                            box-shadow: 0 0 10px rgba(0, 0, 0, 1.0);
+                        }
+
                     </style>
                 </head>
                 <body>
                     <a href="#" id="scroll-to-top"></a>
+                    <a href="http://localhost:8000/start" id="home"></a>
                     <div class="container">
                     <form class="search-form" action="#" method="post">
                         <input type="text" class="search-input" name="query" placeholder="Enter your search query" required>
