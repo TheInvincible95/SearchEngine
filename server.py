@@ -95,9 +95,43 @@ class RequestHandler(BaseHTTPRequestHandler):
                         .search-button:hover {
                             background-color: #45a049;
                         }
+
+                        summary::-webkit-details-marker {
+                            display: none;
+                        }
+
+                        summary {
+                            list-style: none;
+                            cursor: pointer;
+                        }
+
+                        #scroll-to-top {
+                            background-image: url('img/up-arrow.png');
+                            position: fixed;
+                            bottom: 20px;
+                            right: 20px;
+                            z-index: 99;
+                            background-color: #4CAF50;
+                            color: white;
+                            border: none;
+                            border-radius: 50%;
+                            padding: 15px;
+                            cursor: pointer;
+                            width: 30px;
+                            height: 30px;
+                            background-repeat: no-repeat;
+                            background-size: 35px;
+                            background-position: center;
+                        }
+
+                        #scroll-to-top:hover {
+                            background-color: #45A049;
+                        }
+
                     </style>
                 </head>
                 <body>
+                    <a href="#" id="scroll-to-top"></a>
                     <div class="container">
                     <form class="search-form" action="#" method="post">
                         <input type="text" class="search-input" name="query" placeholder="Enter your search query" required>
@@ -108,12 +142,17 @@ class RequestHandler(BaseHTTPRequestHandler):
             for result in data:
                 if not result == "\n":
                     title = result.splitlines()[1]
-                    content = "".join(result.splitlines()[2:])
+                    content = "".join(result.splitlines()[4:])
                     html_content += f"""
                                 <li>
                                     <div class="result-title">
-                                        <h3>{title}</h3>
+                                    <details>
+                                        <summary>
+                                            <h3>{title}</h3>   
+                                            <p>{result.splitlines()[3]}</p>                                         
+                                        </summary>
                                         <p>{content}</p>
+                                    </details>
                                     </div>
                                 </li>
                     """
