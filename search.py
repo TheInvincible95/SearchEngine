@@ -108,8 +108,10 @@ class Searcher:
 
 
 if __name__ == "__main__":
+    
     # Create a Searcher instance
     search_engine = Searcher()
+    
     # Add some example documents
     docs = [
         "Artificial intelligence has revolutionized various industries.",
