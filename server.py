@@ -160,9 +160,14 @@ class RequestHandler(BaseHTTPRequestHandler):
             query = query_params["data"][0]
             results = search_engine.search_engine.search(query)
 
+            # Temporary hack till we clean our corpus
+            prev_doc = ""
             for item in results:
                 name, ratings = item
                 doc = search_engine.documents[name]
+                if doc == prev_doc:
+                    continue
+                prev_doc = doc
                 title = doc.splitlines()[0]
                 desc_line = doc.splitlines()[2]
                 content = "".join(doc.splitlines()[4:])
