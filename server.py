@@ -1,8 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 import os
-import subprocess
-import json
+import search_engine
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -10,13 +9,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length).decode("utf-8")
         data = parse_qs(post_data)["query"][0]
-
-        process = subprocess.run(
-            ["python", "search_engine.py", data], capture_output=True, text=True
-        )
-        output = process.stdout.split("\\")
-        with open("search.json", "w") as f:
-            json.dump(output, f, indent=4)
 
         self.send_response(303)
         self.send_header("Location", "/results?data=" + data)
@@ -38,12 +30,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                     self.wfile.write(f.read())
 
         if self.path.startswith("/results"):
-            with open("search.json", "r") as file:
-                data = json.load(file)
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-
             html_content = """
                 <!DOCTYPE html>
                 <html lang="en">
@@ -165,23 +154,31 @@ class RequestHandler(BaseHTTPRequestHandler):
                     </form>
                         <ol class="results">
                 """
-            for result in data:
-                if not result == "\n":
-                    title = result.splitlines()[1]
-                    content = "".join(result.splitlines()[4:])
-                    html_content += f"""
-                                <li>
-                                    <div class="result-title">
-                                    <details>
-                                        <summary>
-                                            <h3>{title}</h3>   
-                                            <p>{result.splitlines()[3]}</p>                                         
-                                        </summary>
-                                        <p>{content}</p>
-                                    </details>
-                                    </div>
-                                </li>
-                    """
+
+            parsed_url = urlparse(self.path)
+            query_params = parse_qs(parsed_url.query)
+            query = query_params["data"][0]
+            results = search_engine.search_engine.search(query)
+
+            for item in results:
+                name, ratings = item
+                doc = search_engine.documents[name]
+                title = doc.splitlines()[0]
+                desc_line = doc.splitlines()[2]
+                content = "".join(doc.splitlines()[4:])
+                html_content += f"""
+                            <li>
+                                <div class="result-title">
+                                <details>
+                                    <summary>
+                                        <h3>{title}</h3>
+                                        <p>{desc_line}</p>                                         
+                                    </summary>
+                                    <p>{content}</p>
+                                </details>
+                                </div>
+                            </li>
+                """
             html_content += """
                         </ol>
                     </div>
