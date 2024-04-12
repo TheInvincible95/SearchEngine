@@ -54,3 +54,4 @@ search_engine = search.Searcher()
 
 for name, doc in documents.items():
     search_engine.add_document(doc)
+search_engine.avgdlcalc()
