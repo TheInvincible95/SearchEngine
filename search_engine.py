@@ -54,6 +54,7 @@ search_engine = sch.Searcher()
 
 for name, doc in documents.items():
     search_engine.add_document(doc)
+search_engine.avgdlcalc()
 
 # return the results of a query
 

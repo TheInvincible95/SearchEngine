@@ -8,7 +8,7 @@ from datetime import datetime
 # TODO: Currently all vectors are stored as (string , number) pairs. We could replace this if we use a consitent word->number function
 class Document:
     def __init__(self, text):
-        self.text = text  # We don't really need to store this
+        self.length = len(text)
         self.term_freq = self.preprocess(text)
 
         self.last_updated = datetime.now()
@@ -47,6 +47,11 @@ class Searcher:
         self.total_documents = 0
         self.document_freq = defaultdict(int)
         self.last_updated = datetime.now()
+        self.avgdl = 0
+
+        # Parameters for BM25, need tuning
+        self.k1 = 1.5
+        self.b = 0.75
 
     def add_document(self, text):
         doc = Document(text)
@@ -58,19 +63,33 @@ class Searcher:
         self.last_updated = datetime.now()
         return self.total_documents - 1
 
+    def avgdlcalc(self):
+        for d in self.documents:
+            self.avgdl += d.length
+        self.avgdl /= self.total_documents
+
     def tf(self, term, doc):
         return doc.term_freq.get(term, 0) / float(sum(doc.term_freq.values()))
 
     def idf(self, term):
         return log(self.total_documents / float((1 + self.document_freq.get(term, 0))))
 
-    def tf_idf(self, term, doc):
-        return self.tf(term, doc) * self.idf(term)
+    # def tf_idf(self, term, doc):
+    #     return self.tf(term, doc) * self.idf(term)
+
+    def bm25_tf_idf(self, term, doc):
+        return self.idf(term) * (
+            (self.tf(term, doc) * (self.k1 + 1))
+            / (
+                self.tf(term, doc)
+                + self.k1 * ((1 - self.b) + self.b * doc.length / self.avgdl)
+            )
+        )
 
     def _tf_idf_vector(self, document):
         tf_idf_vector = {}
         for term in document.term_freq:
-            tf_idf_vector[term] = self.tf_idf(term, document)
+            tf_idf_vector[term] = self.bm25_tf_idf(term, document)
         return tf_idf_vector
 
     def get_tf_idf_vector(self, doc_id):
@@ -139,6 +158,8 @@ if __name__ == "__main__":
     ]
     for d in docs:
         search_engine.add_document(d)
+
+    search_engine.avgdlcalc()
 
     # Test a query
     query = "artificial intelligence and machine learning"
