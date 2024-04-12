@@ -36,7 +36,8 @@ class Document:
             self.tf_idf_vector = searcher._tf_idf_vector(
                 self
             )  # Note: self is document, not searcher
-            self.magnitude = sum(val**2 for val in self.tf_idf_vector.values()) ** 0.5
+            self.magnitude = sum(
+                val**2 for val in self.tf_idf_vector.values()) ** 0.5
             self.last_updated = datetime.now()
 
 
@@ -100,7 +101,8 @@ class Searcher:
         rankings = []
         for i, doc in enumerate(self.documents):
             doc_tf_idf = self.get_tf_idf_vector(i)
-            similarity = self._cosine_similarity_internal(query_tf_idf, doc_tf_idf)
+            similarity = self._cosine_similarity_internal(
+                query_tf_idf, doc_tf_idf)
             rankings.append((i, similarity))
 
         rankings.sort(key=lambda x: x[1], reverse=True)
@@ -108,10 +110,10 @@ class Searcher:
 
 
 if __name__ == "__main__":
-    
+
     # Create a Searcher instance
     search_engine = Searcher()
-    
+
     # Add some example documents
     docs = [
         "Artificial intelligence has revolutionized various industries.",

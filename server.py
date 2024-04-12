@@ -158,7 +158,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             parsed_url = urlparse(self.path)
             query_params = parse_qs(parsed_url.query)
             query = query_params["data"][0]
-            results = search_engine.search_engine.search(query)
+
+            results = search_engine.raveQuery(query)
 
             # Temporary hack till we clean our corpus
             prev_doc = ""

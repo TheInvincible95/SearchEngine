@@ -12,7 +12,7 @@ from nltk.tokenize import word_tokenize
 import sys
 
 import corpusToDict as ctd
-import search
+import search as sch
 
 # documents = {
 #     "0": "Artificial intelligence has revolutionized various industries.",
@@ -50,7 +50,13 @@ for i in range(1, len(corpus)):
     documents[i - 1] = text
 
 # Create a Searcher instance
-search_engine = search.Searcher()
+search_engine = sch.Searcher()
 
 for name, doc in documents.items():
     search_engine.add_document(doc)
+
+# return the results of a query
+
+
+def raveQuery(query):
+    return search_engine.search(query)
