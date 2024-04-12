@@ -50,7 +50,7 @@ class Searcher:
         self.avgdl = 0
 
         # Parameters for BM25, need tuning
-        self.k1 = 1.5
+        self.k1 = 1.2
         self.b = 0.75
 
     def add_document(self, text):
@@ -65,14 +65,18 @@ class Searcher:
 
     def avgdlcalc(self):
         for d in self.documents:
-            self.avgdl += d.length
+            self.avgdl += len(d.term_freq)
         self.avgdl /= self.total_documents
 
     def tf(self, term, doc):
         return doc.term_freq.get(term, 0) / float(sum(doc.term_freq.values()))
 
     def idf(self, term):
-        return log(self.total_documents / float((1 + self.document_freq.get(term, 0))))
+        return log(
+            1
+            + (self.total_documents - self.document_freq.get(term, 0) + 0.5)
+            / (self.document_freq.get(term, 0) + 0.5)
+        )
 
     # def tf_idf(self, term, doc):
     #     return self.tf(term, doc) * self.idf(term)
@@ -82,7 +86,7 @@ class Searcher:
             (self.tf(term, doc) * (self.k1 + 1))
             / (
                 self.tf(term, doc)
-                + self.k1 * ((1 - self.b) + self.b * doc.length / self.avgdl)
+                + self.k1 * ((1 - self.b) + self.b * len(doc.term_freq) / self.avgdl)
             )
         )
 
