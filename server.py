@@ -162,6 +162,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             results = search_engine.raveQuery(query)
 
             # Temporary hack till we clean our corpus
+            # its permamnet now, shhhhh
             prev_doc = ""
             for item in results:
                 name, ratings = item
