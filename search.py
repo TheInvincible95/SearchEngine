@@ -66,8 +66,6 @@ class Searcher:
         return self.total_documents - 1
 
     def avgdlcalc(self, cat):
-        self.req_documents = 0
-        self.avgdl = 0
         for d in self.documents:
             if d.cat in cat:
                 self.req_documents += 1

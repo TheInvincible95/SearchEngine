@@ -40,7 +40,6 @@ for i in range(1, len(corpus)):
 # This part takes about 6s
 # if there is no pickle of a previously computed searcher class, compute it and store it in a pickle
 # reduces the runtime of this part of code from ~6s to ~1s
-
 if not os.path.exists("./searcherPickle.pkl"):
 
     # Create a Searcher instance
@@ -59,12 +58,10 @@ else:
     with open("searcherPickle.pkl", "rb") as file:
         search_engine = pickle.load(file)
 
-# ===================================================================================================================================================================================
 
-
-# return the results of a query
 def raveQuery(category, query):
-    # Sepcifying no category is considered as choosing all categories
+
+    # Specifying no category is considered as choosing all categories
     if category == []:
         category = [str(i) for i in range(5)]
     search_engine.avgdlcalc(category)
