@@ -1,27 +1,46 @@
-# utility code to convert speech to text, for voice based search:
-import torch
-import zipfile
-import torchaudio
-from glob import glob
+from faster_whisper import WhisperModel
+import sounddevice as sd
+import wavio as wv
 
-device = torch.device('cpu')  # gpu also works, but our models are fast enough for CPU
-model, decoder, utils = torch.hub.load(repo_or_dir='snakers4/silero-models',
-                                       model='silero_stt',
-                                       language='en', # also available 'de', 'es'
-                                       device=device)
-(read_batch, split_into_batches,
- read_audio, prepare_model_input) = utils  # see function signature for details
 
-# download a single file in any format compatible with TorchAudio
-# torch.hub.download_url_to_file('https://opus-codec.org/static/examples/samples/speech_orig.wav',
-#                                dst ='speech_orig.wav', progress=True)
-# test_files = glob('speech_orig.wav')
+# returns a transcription of a set duration of recorded audio, using the device's default audio input device
+def stt():
 
-test_files = ["./sampleAudio/worldcup.flac"]
-batches = split_into_batches(test_files, batch_size=10)
-input = prepare_model_input(read_batch(batches[0]),
-                            device=device)
+    # ===================================================================== Get audio from mic ================================================================================
+    # Sampling frequency in hz
+    freq = 44100
 
-output = model(input)
-for example in output:
-    print(decoder(example.cpu()))
+    # Recording duration in seconds
+    duration = 3
+
+    # Start recorder with the set values of duration and sample frequency
+    # and return a numpy array of the audio
+    recording = sd.rec(int(duration * freq),
+                       samplerate=freq, channels=2)
+
+    # Record audio for the set number of seconds
+    sd.wait()
+
+    # Convert the NumPy array to audio file
+    wv.write("recording.wav", recording, freq, sampwidth=2)
+
+    # ==================================================================== Transcribe the audio ===============================================================================
+
+    model_size = "small.en"
+    model = WhisperModel(model_size, download_root="./Whisper", device="cpu")
+
+    segments, info = model.transcribe(
+        "./recording.wav", beam_size=5)
+
+    print("Detected language '%s' with probability %f" %
+          (info.language, info.language_probability))
+
+    for segment in segments:
+        print("[%.2fs -> %.2fs] %s" %
+              (segment.start, segment.end, segment.text))
+
+    return segments[0].text
+
+
+text = stt()
+print(text)
