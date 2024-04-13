@@ -49,7 +49,6 @@ def raveQuery(category, query):
         for name, doc in documents.items():
             cat = corpus[name + 1][1]
             search_engine.add_document(doc, name, cat)
-        search_engine.avgdlcalc(cat)
 
         # create the pickle file
         with open("searcherPickle.pkl", "wb") as file:
@@ -59,6 +58,11 @@ def raveQuery(category, query):
     else:
         with open("searcherPickle.pkl", "rb") as file:
             search_engine = pickle.load(file)
+
+    # Sepcifying no category is considered as choosing all categories
+    if category == []:
+        category = [str(i) for i in range(5)]
+    search_engine.avgdlcalc(category)
 
     # ===================================================================================================================================================================================
 
