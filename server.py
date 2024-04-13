@@ -2,15 +2,40 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 import os
 import search_engine
+from jinja2 import Template
+import json
+
+
+def extract_cookie(self):
+    # Extracting cookie back
+    cookie_header = self.headers.get("Cookie")
+    cookies = {}
+    if cookie_header:
+        cookie_pairs = cookie_header.split(";")
+        for pair in cookie_pairs:
+            key, value = pair.strip().split("=")
+            cookies[key] = value
+
+    return list(cookies["rave_cat_data"][1:-1])
 
 
 class RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length).decode("utf-8")
-        data = parse_qs(post_data)["query"][0]
+        query = parse_qs(post_data)
+        data = query["query"][0]
+
+        # Store user chosen categories as cookie
+        category = ""
+        for label in range(5):
+            if str(label) in query:
+                category += str(label)
+        cookie_data = json.dumps(category)
 
         self.send_response(303)
+        self.send_header("Content-type", "text/html")
+        self.send_header("Set-Cookie", f"rave_cat_data={cookie_data}")
         self.send_header("Location", "/results?data=" + data)
         self.end_headers()
 
@@ -32,7 +57,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         if self.path.startswith("/results"):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
+
+            category = extract_cookie(self)
             self.end_headers()
+
             html_content = """
                 <!DOCTYPE html>
                 <html lang="en">
@@ -142,6 +170,34 @@ class RequestHandler(BaseHTTPRequestHandler):
                             box-shadow: 0 0 10px rgba(0, 0, 0, 1.0);
                         }
 
+                        input[type="checkbox"] {
+                            display: none;
+                        }
+
+                        .category {
+                            display: flex;
+                            margin-top: 20px;
+                            padding: 5px;
+                            justify-content: center;
+                            align-items: center;
+                            transform: translateX(-10px);
+                        }
+
+                        .custom-checkbox {
+                            margin-left: 20px;
+                            display: inline-block;
+                            width: 12px;
+                            height: 12px;
+                            background-color: #fff;
+                            border: 1px solid #000000;
+                            border-radius: 3px;
+                            cursor: pointer;
+                        }
+
+                        input[type="checkbox"]:checked+.custom-checkbox {
+                            background-color: #45a049;
+                        }
+
                     </style>
                 </head>
                 <body>
@@ -151,6 +207,33 @@ class RequestHandler(BaseHTTPRequestHandler):
                     <form class="search-form" action="#" method="post">
                         <input type="text" class="search-input" name="query" placeholder="Enter your search query" required>
                         <button type="submit" class="search-button"><img src="img/magnifying-glass.png" height="16"></button>
+                        <div class="category">
+                            <label>
+                                <input type="checkbox" name="0" value="Y" {% for item in category %}{% if item == "0" %} checked {% endif %}{% endfor %}>
+                                <span class="custom-checkbox"></span>
+                                {% if "0" in category %}<span style="text-decoration: underline;">{% endif %}Politics{% if "0" in category %}</span>{% endif %}
+                            </label>
+                            <label>
+                                <input type="checkbox" name="1" value="Y" {% for item in category %}{% if item == "1" %}checked{% endif %}{% endfor %}>
+                                <span class="custom-checkbox"></span>
+                                {% if "1" in category %}<span style="text-decoration: underline;">{% endif %}Sport{% if "1" in category %}</span>{% endif %}
+                            </label>
+                            <label>
+                                <input type="checkbox" name="2" value="Y" {% for item in category %}{% if item == "2" %}checked{% endif %}{% endfor %}>
+                                <span class="custom-checkbox"></span>
+                                {% if "2" in category %}<span style="text-decoration: underline;">{% endif %}Technology{% if "2" in category %}</span>{% endif %}
+                            </label>
+                            <label>
+                                <input type="checkbox" name="3" value="Y" {% for item in category %}{% if item == "3" %} checked {% endif %}{% endfor %}>
+                                <span class="custom-checkbox"></span>
+                                {% if "3" in category %}<span style="text-decoration: underline;">{% endif %}Entertainment{% if "3" in category %}</span>{% endif %}
+                            </label>
+                            <label>
+                                <input type="checkbox" name="4" value="Y" {% for item in category %}{% if item == "4" %}checked{% endif %}{% endfor %}>
+                                <span class="custom-checkbox"></span>
+                                {% if "4" in category %}<span style="text-decoration: underline;">{% endif %}Business{% if "4" in category %}</span>{% endif %}
+                            </label>
+                        </div>
                     </form>
                         <ol class="results">
                 """
@@ -159,10 +242,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             query_params = parse_qs(parsed_url.query)
             query = query_params["data"][0]
 
-            results = search_engine.raveQuery(query)
+            results = search_engine.raveQuery(category, query)
 
             # Temporary hack till we clean our corpus
-            # its permamnet now, shhhhh
+            # its permanent now, shhhhh
             prev_doc = ""
             for item in results:
                 name, ratings = item
@@ -192,14 +275,19 @@ class RequestHandler(BaseHTTPRequestHandler):
                 </body>
                 </html>
                 """
-            self.wfile.write(html_content.encode("utf-8"))
+            template = Template(html_content)
+            rendered_html = template.render(category=category)
+            self.wfile.write(rendered_html.encode("utf-8"))
 
         elif self.path == "/start":
-            with open("start.html", "rb") as f:
+            with open("start.html", "r") as f:
+                template = Template(f.read())
+                category = extract_cookie(self)
+                rendered_html = template.render(category=category)
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
-                self.wfile.write(f.read())
+                self.wfile.write(rendered_html.encode("utf-8"))
 
 
 def run():

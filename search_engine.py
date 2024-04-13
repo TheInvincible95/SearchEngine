@@ -36,31 +36,33 @@ for i in range(1, len(corpus)):
 
 # ---------------------------------------------------------------------------------
 
+
 # This part takes about 6s
 # if there is no pickle of a previously computed searcher class, compute it and store it in a pickle
 # reduces the runtime of this part of code from ~6s to ~1s
-if not os.path.exists("./searcherPickle.pkl"):
+def raveQuery(category, query):
+    # if not os.path.exists("./searcherPickle.pkl"):
 
     # Create a Searcher instance
     search_engine = sch.Searcher()
 
+    if category == []:
+        category = [str(i) for i in range(0, 5)]
     for name, doc in documents.items():
-        search_engine.add_document(doc)
+        if corpus[name + 1][1] in category:
+            search_engine.add_document(doc, name)
     search_engine.avgdlcalc()
 
     # create the pickle file
-    with open("searcherPickle.pkl", "wb") as file:
-        pickle.dump(search_engine, file)
+    #     with open("searcherPickle.pkl", "wb") as file:
+    #         pickle.dump(search_engine, file)
 
-# if the searcher class already computed stuff, and stored it in a pickle, directly read the searcher class from the pickle:
-else:
-    with open("searcherPickle.pkl", "rb") as file:
-        search_engine = pickle.load(file)
+    # # if the searcher class already computed stuff, and stored it in a pickle, directly read the searcher class from the pickle:
+    # else:
+    #     with open("searcherPickle.pkl", "rb") as file:
+    #         search_engine = pickle.load(file)
 
-# ===================================================================================================================================================================================
+    # ===================================================================================================================================================================================
 
-# return the results of a query
-
-
-def raveQuery(query):
+    # return the results of a query
     return search_engine.search(query)

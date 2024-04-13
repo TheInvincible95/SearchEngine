@@ -7,7 +7,8 @@ from datetime import datetime
 
 # TODO: Currently all vectors are stored as (string , number) pairs. We could replace this if we use a consitent word->number function
 class Document:
-    def __init__(self, text):
+    def __init__(self, text, name):
+        self.name = name
         self.length = len(text)
         self.term_freq = self.preprocess(text)
 
@@ -36,8 +37,7 @@ class Document:
             self.tf_idf_vector = searcher._tf_idf_vector(
                 self
             )  # Note: self is document, not searcher
-            self.magnitude = sum(
-                val**2 for val in self.tf_idf_vector.values()) ** 0.5
+            self.magnitude = sum(val**2 for val in self.tf_idf_vector.values()) ** 0.5
             self.last_updated = datetime.now()
 
 
@@ -53,8 +53,8 @@ class Searcher:
         self.k1 = 1.2
         self.b = 0.75
 
-    def add_document(self, text):
-        doc = Document(text)
+    def add_document(self, text, name):
+        doc = Document(text, name)
         self.documents.append(doc)
         self.total_documents += 1
 
@@ -119,14 +119,13 @@ class Searcher:
         return self._cosine_similarity_internal(doc1_tf_idf, doc2_tf_idf)
 
     def search(self, query):
-        query_doc = Document(query)
+        query_doc = Document(query, -1)
         query_tf_idf = self._tf_idf_vector(query_doc)
         rankings = []
         for i, doc in enumerate(self.documents):
             doc_tf_idf = self.get_tf_idf_vector(i)
-            similarity = self._cosine_similarity_internal(
-                query_tf_idf, doc_tf_idf)
-            rankings.append((i, similarity))
+            similarity = self._cosine_similarity_internal(query_tf_idf, doc_tf_idf)
+            rankings.append((self.documents[i].name, similarity))
 
         rankings.sort(key=lambda x: x[1], reverse=True)
         return rankings
@@ -160,8 +159,8 @@ if __name__ == "__main__":
         "Mindfulness and meditation practices for achieving inner peace and clarity.",
         "The importance of self-care in maintaining physical and emotional health.",
     ]
-    for d in docs:
-        search_engine.add_document(d)
+    for i, d in enumerate(docs):
+        search_engine.add_document(d, i)
 
     search_engine.avgdlcalc()
 

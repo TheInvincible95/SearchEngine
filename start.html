@@ -114,9 +114,33 @@
             }
         }
 
+        input[type="checkbox"] {
+            display: none;
+        }
+
+        .category {
+            margin: 30px;
+            transform: translateX(-10px);
+        }
+
+        .custom-checkbox {
+            margin-left: 20px;
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #fff;
+            border: 1px solid #000000;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"]:checked+.custom-checkbox {
+            background-color: #45a049;
+        }
+
         a {
             display: block;
-            margin: 20px;
+            margin: 10px;
         }
     </style>
 </head>
@@ -130,6 +154,38 @@
         <form class="search-form" action="#" method="post">
             <input type="text" class="search-input" name="query" placeholder="Enter your search query" required>
             <button type="submit" class="search-button"><img src="img/magnifying-glass.png" height="16"></button>
+            <div class="category">
+                <label>
+                    <input type="checkbox" name="0" value="Y" {% for item in category %}{% if item=="0" %} checked {%
+                        endif %}{% endfor %}>
+                    <span class="custom-checkbox"></span>
+                    Politics
+                </label>
+                <label>
+                    <input type="checkbox" name="1" value="Y" {% for item in category %}{% if item=="1" %}checked{%
+                        endif %}{% endfor %}>
+                    <span class="custom-checkbox"></span>
+                    Sport
+                </label>
+                <label>
+                    <input type="checkbox" name="2" value="Y" {% for item in category %}{% if item=="2" %}checked{%
+                        endif %}{% endfor %}>
+                    <span class="custom-checkbox"></span>
+                    Technology
+                </label>
+                <label>
+                    <input type="checkbox" name="3" value="Y" {% for item in category %}{% if item=="3" %} checked {%
+                        endif %}{% endfor %}>
+                    <span class="custom-checkbox"></span>
+                    Entertainment
+                </label>
+                <label>
+                    <input type="checkbox" name="4" value="Y" {% for item in category %}{% if item=="4" %}checked{%
+                        endif %}{% endfor %}>
+                    <span class="custom-checkbox"></span>
+                    Business
+                </label>
+            </div>
         </form>
         <a href="http://tiny.cc/luckyrave">I'm feeling lucky</a>
     </div>
