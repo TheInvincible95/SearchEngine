@@ -15,8 +15,10 @@ def extract_cookie(self):
         for pair in cookie_pairs:
             key, value = pair.strip().split("=")
             cookies[key] = value
-
-    return list(cookies["rave_cat_data"][1:-1])
+    try:
+        return list(cookies["rave_cat_data"][1:-1])
+    except KeyError:
+        return []
 
 
 class RequestHandler(BaseHTTPRequestHandler):
