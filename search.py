@@ -7,8 +7,9 @@ from datetime import datetime
 
 # TODO: Currently all vectors are stored as (string , number) pairs. We could replace this if we use a consitent word->number function
 class Document:
-    def __init__(self, text, name):
+    def __init__(self, text, name, cat):
         self.name = name
+        self.cat = cat
         self.length = len(text)
         self.term_freq = self.preprocess(text)
 
@@ -45,6 +46,7 @@ class Searcher:
     def __init__(self):
         self.documents = []
         self.total_documents = 0
+        self.req_documents = 0
         self.document_freq = defaultdict(int)
         self.last_updated = datetime.now()
         self.avgdl = 0
@@ -53,8 +55,8 @@ class Searcher:
         self.k1 = 1.2
         self.b = 0.75
 
-    def add_document(self, text, name):
-        doc = Document(text, name)
+    def add_document(self, text, name, cat):
+        doc = Document(text, name, cat)
         self.documents.append(doc)
         self.total_documents += 1
 
@@ -63,10 +65,12 @@ class Searcher:
         self.last_updated = datetime.now()
         return self.total_documents - 1
 
-    def avgdlcalc(self):
+    def avgdlcalc(self, cat):
         for d in self.documents:
-            self.avgdl += len(d.term_freq)
-        self.avgdl /= self.total_documents
+            if d.cat in cat:
+                self.req_documents += 1
+                self.avgdl += len(d.term_freq)
+        self.avgdl /= self.req_documents
 
     def tf(self, term, doc):
         return doc.term_freq.get(term, 0) / float(sum(doc.term_freq.values()))
@@ -74,7 +78,7 @@ class Searcher:
     def idf(self, term):
         return log(
             1
-            + (self.total_documents - self.document_freq.get(term, 0) + 0.5)
+            + (self.req_documents - self.document_freq.get(term, 0) + 0.5)
             / (self.document_freq.get(term, 0) + 0.5)
         )
 
@@ -118,14 +122,15 @@ class Searcher:
         doc2_tf_idf = self.get_tf_idf_vector(doc_id2)
         return self._cosine_similarity_internal(doc1_tf_idf, doc2_tf_idf)
 
-    def search(self, query):
-        query_doc = Document(query, -1)
+    def search(self, category, query):
+        query_doc = Document(query, -1, "")
         query_tf_idf = self._tf_idf_vector(query_doc)
         rankings = []
         for i, doc in enumerate(self.documents):
-            doc_tf_idf = self.get_tf_idf_vector(i)
-            similarity = self._cosine_similarity_internal(query_tf_idf, doc_tf_idf)
-            rankings.append((self.documents[i].name, similarity))
+            if self.documents[i].cat in category:
+                doc_tf_idf = self.get_tf_idf_vector(i)
+                similarity = self._cosine_similarity_internal(query_tf_idf, doc_tf_idf)
+                rankings.append((self.documents[i].name, similarity))
 
         rankings.sort(key=lambda x: x[1], reverse=True)
         return rankings

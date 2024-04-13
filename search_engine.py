@@ -41,28 +41,26 @@ for i in range(1, len(corpus)):
 # if there is no pickle of a previously computed searcher class, compute it and store it in a pickle
 # reduces the runtime of this part of code from ~6s to ~1s
 def raveQuery(category, query):
-    # if not os.path.exists("./searcherPickle.pkl"):
+    if not os.path.exists("./searcherPickle.pkl"):
 
-    # Create a Searcher instance
-    search_engine = sch.Searcher()
+        # Create a Searcher instance
+        search_engine = sch.Searcher()
 
-    if category == []:
-        category = [str(i) for i in range(0, 5)]
-    for name, doc in documents.items():
-        if corpus[name + 1][1] in category:
-            search_engine.add_document(doc, name)
-    search_engine.avgdlcalc()
+        for name, doc in documents.items():
+            cat = corpus[name + 1][1]
+            search_engine.add_document(doc, name, cat)
+        search_engine.avgdlcalc(cat)
 
-    # create the pickle file
-    #     with open("searcherPickle.pkl", "wb") as file:
-    #         pickle.dump(search_engine, file)
+        # create the pickle file
+        with open("searcherPickle.pkl", "wb") as file:
+            pickle.dump(search_engine, file)
 
-    # # if the searcher class already computed stuff, and stored it in a pickle, directly read the searcher class from the pickle:
-    # else:
-    #     with open("searcherPickle.pkl", "rb") as file:
-    #         search_engine = pickle.load(file)
+    # if the searcher class already computed stuff, and stored it in a pickle, directly read the searcher class from the pickle:
+    else:
+        with open("searcherPickle.pkl", "rb") as file:
+            search_engine = pickle.load(file)
 
     # ===================================================================================================================================================================================
 
     # return the results of a query
-    return search_engine.search(query)
+    return search_engine.search(category, query)
