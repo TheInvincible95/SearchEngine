@@ -18,7 +18,7 @@ import search as sch
 import pickle
 import os
 
-# ============================================================== Run this when file is imported, as initialisation ==================================================================
+# ============================================================== Run this when file is imported, as initialisation ========================================================================
 
 # this part takes ~48ms, so dont store it, and compute it each time the code is run
 # ---------------------------------------------------------------------------------
@@ -40,31 +40,32 @@ for i in range(1, len(corpus)):
 # This part takes about 6s
 # if there is no pickle of a previously computed searcher class, compute it and store it in a pickle
 # reduces the runtime of this part of code from ~6s to ~1s
+
+if not os.path.exists("./searcherPickle.pkl"):
+
+    # Create a Searcher instance
+    search_engine = sch.Searcher()
+
+    for name, doc in documents.items():
+        cat = corpus[name + 1][1]
+        search_engine.add_document(doc, name, cat)
+
+    # create the pickle file
+    with open("searcherPickle.pkl", "wb") as file:
+        pickle.dump(search_engine, file)
+
+# if the searcher class already computed stuff, and stored it in a pickle, directly read the searcher class from the pickle:
+else:
+    with open("searcherPickle.pkl", "rb") as file:
+        search_engine = pickle.load(file)
+
+# ===================================================================================================================================================================================
+
+
+# return the results of a query
 def raveQuery(category, query):
-    if not os.path.exists("./searcherPickle.pkl"):
-
-        # Create a Searcher instance
-        search_engine = sch.Searcher()
-
-        for name, doc in documents.items():
-            cat = corpus[name + 1][1]
-            search_engine.add_document(doc, name, cat)
-
-        # create the pickle file
-        with open("searcherPickle.pkl", "wb") as file:
-            pickle.dump(search_engine, file)
-
-    # if the searcher class already computed stuff, and stored it in a pickle, directly read the searcher class from the pickle:
-    else:
-        with open("searcherPickle.pkl", "rb") as file:
-            search_engine = pickle.load(file)
-
     # Sepcifying no category is considered as choosing all categories
     if category == []:
         category = [str(i) for i in range(5)]
     search_engine.avgdlcalc(category)
-
-    # ===================================================================================================================================================================================
-
-    # return the results of a query
     return search_engine.search(category, query)
