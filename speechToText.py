@@ -15,8 +15,7 @@ def stt():
 
     # Start recorder with the set values of duration and sample frequency
     # and return a numpy array of the audio
-    recording = sd.rec(int(duration * freq),
-                       samplerate=freq, channels=2)
+    recording = sd.rec(int(duration * freq), samplerate=freq, channels=2)
 
     # Record audio for the set number of seconds
     sd.wait()
@@ -27,19 +26,19 @@ def stt():
     # ==================================================================== Transcribe the audio ===============================================================================
 
     model_size = "small.en"
-    model = WhisperModel(model_size, download_root="./Whisper", device="cpu")
+    model = WhisperModel(
+        model_size, download_root="./Whisper", device="cpu", compute_type="int8"
+    )
 
-    segments, info = model.transcribe(
-        "./recording.wav", beam_size=5)
+    segments, info = model.transcribe("./recording.wav", beam_size=5)
 
-    print("Detected language '%s' with probability %f" %
-          (info.language, info.language_probability))
+    print(
+        "Detected language '%s' with probability %f"
+        % (info.language, info.language_probability)
+    )
 
-    for segment in segments:
-        print("[%.2fs -> %.2fs] %s" %
-              (segment.start, segment.end, segment.text))
-
-    return segments[0].text
+    text = "".join(segment.text for segment in segments)
+    return text
 
 
 text = stt()

@@ -4,6 +4,7 @@ myEnv
 *.pyc
 *.pkl
 Whisper/*
+*.wav
 ################################################
 
 # Byte-compiled / optimized / DLL files
