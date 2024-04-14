@@ -130,7 +130,10 @@ class Searcher:
             if self.documents[i].cat in category:
                 doc_tf_idf = self.get_tf_idf_vector(i)
                 similarity = self._cosine_similarity_internal(query_tf_idf, doc_tf_idf)
-                rankings.append((self.documents[i].name, similarity))
+                if similarity > 0:
+                    rankings.append(
+                        (self.documents[i].name, similarity, self.documents[i].cat)
+                    )
 
         rankings.sort(key=lambda x: x[1], reverse=True)
         return rankings

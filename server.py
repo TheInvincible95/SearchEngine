@@ -4,6 +4,21 @@ import os
 import search_engine
 from jinja2 import Template
 import json
+import mimetypes
+import subprocess
+import csv
+
+
+def read_labels_csv(file_path):
+    data = []
+    with open(file_path, "r", newline="") as csvfile:
+        csvreader = csv.reader(csvfile)
+        for row in csvreader:
+            data.append(row[1].strip())
+    return data
+
+
+labels_data = read_labels_csv("labels.csv")
 
 
 def extract_cookie(self):
@@ -21,7 +36,25 @@ def extract_cookie(self):
         return []
 
 
+def serve_static(self):
+    file_path = self.path.lstrip("/")
+    if os.path.exists(file_path):
+        content_type, _ = mimetypes.guess_type(file_path)
+        with open(file_path, "rb") as f:
+            self.send_response(200)
+            self.send_header("Content-type", content_type)
+            self.end_headers()
+            self.wfile.write(f.read())
+    else:
+        self.send_error(404, "File not found")
+
+
+# Speech-to-text subprocess
+process = None
+
+
 class RequestHandler(BaseHTTPRequestHandler):
+
     def do_POST(self):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length).decode("utf-8")
@@ -31,7 +64,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Store user chosen categories as cookie
         category = ""
         for label in range(5):
-            if str(label) in query:
+            if str(label) in query["cat"]:
                 category += str(label)
         cookie_data = json.dumps(category)
 
@@ -42,21 +75,22 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path.startswith("/img"):
-            image_path = self.path.lstrip("/")
-            image_file = os.path.join(
-                os.getcwd(),
-                image_path,
-            )
+        global process
 
-            if os.path.exists(image_file):
-                with open(image_file, "rb") as f:
-                    self.send_response(200)
-                    self.send_header("Content-type", "image/png")
-                    self.end_headers()
-                    self.wfile.write(f.read())
+        if self.path == "/trigger-STT":
+            if process is None:
+                # Start the python STT process
+                process = subprocess.Popen(
+                    ["python", "speechToText.py"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                stdout, stderr = process.communicate()
+                data = stdout.decode("utf-8").strip()
+                self.wfile.write(data.encode("utf-8"))
+                process = None
 
-        if self.path.startswith("/results"):
+        elif self.path.startswith("/results"):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
 
@@ -71,6 +105,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>rave Results</title>
                     <link rel="icon" type="image/png" href="img/magnifying-glass.png">
+                    <script src="script.js"></script>
                     <style>
                         body {
                             font-family: Arial, sans-serif;
@@ -100,7 +135,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                             outline: none;
                         }
 
-                        .search-button {
+                        .search-button,
+                        .record-button {
                             padding: 10px 20px;
                             font-size: 16px;
                             background-color: #4CAF50;
@@ -111,8 +147,21 @@ class RequestHandler(BaseHTTPRequestHandler):
                             transition: background-color 0.3s;
                         }
 
-                        .search-button:hover {
+                        .record-button {
+                            width: 90px;
+                        }
+
+                        .search-button:hover,
+                        .record-button:hover {
                             background-color: #45a049;
+                        }
+
+                        .record-button #timer,
+                        .record-button #loader {
+                            display: inline-block;
+                            position: relative;
+                            top: -1px;
+                            margin-left: 5px;
                         }
 
                         summary::-webkit-details-marker {
@@ -200,6 +249,34 @@ class RequestHandler(BaseHTTPRequestHandler):
                             background-color: #45a049;
                         }
 
+                        #loader {
+                            border: 4px solid #000000;
+                            border-top: 4px solid #ffffff;
+                            border-radius: 50%;
+                            width: 8px;
+                            height: 8px;
+                            animation: spin 1s linear infinite;
+                        }
+
+                        @keyframes spin {
+                            0% {
+                                transform: rotate(0deg);
+                            }
+
+                            100% {
+                                transform: rotate(360deg);
+                            }
+                        }
+
+                        @font-face {
+                            font-family: 'oldenburg';
+                            src: url('fonts/oldenburg.woff2') format('woff2');
+                        }
+
+                        .no-results{
+                            text-align: center;
+                        }
+
                     </style>
                 </head>
                 <body>
@@ -209,29 +286,33 @@ class RequestHandler(BaseHTTPRequestHandler):
                     <form class="search-form" action="#" method="post">
                         <input type="text" class="search-input" name="query" placeholder="Enter your search query" required>
                         <button type="submit" class="search-button"><img src="img/magnifying-glass.png" height="16"></button>
+                        <button type="button" class="record-button" onclick="toggleMic()"><img id="mic-img"
+                            src="img/microphone-black-shape.png" height="16">
+                        <div id="timer">3</div>
+                        </button>
                         <div class="category">
                             <label>
-                                <input type="checkbox" name="0" value="Y" {% for item in category %}{% if item == "0" %} checked {% endif %}{% endfor %}>
+                                <input type="checkbox" name="cat" value="0" {% for item in category %}{% if item == "0" %} checked {% endif %}{% endfor %}>
                                 <span class="custom-checkbox"></span>
                                 {% if "0" in category %}<span style="text-decoration: underline;">{% endif %}Politics{% if "0" in category %}</span>{% endif %}
                             </label>
                             <label>
-                                <input type="checkbox" name="1" value="Y" {% for item in category %}{% if item == "1" %}checked{% endif %}{% endfor %}>
+                                <input type="checkbox" name="cat" value="1" {% for item in category %}{% if item == "1" %}checked{% endif %}{% endfor %}>
                                 <span class="custom-checkbox"></span>
                                 {% if "1" in category %}<span style="text-decoration: underline;">{% endif %}Sport{% if "1" in category %}</span>{% endif %}
                             </label>
                             <label>
-                                <input type="checkbox" name="2" value="Y" {% for item in category %}{% if item == "2" %}checked{% endif %}{% endfor %}>
+                                <input type="checkbox" name="cat" value="2" {% for item in category %}{% if item == "2" %}checked{% endif %}{% endfor %}>
                                 <span class="custom-checkbox"></span>
                                 {% if "2" in category %}<span style="text-decoration: underline;">{% endif %}Technology{% if "2" in category %}</span>{% endif %}
                             </label>
                             <label>
-                                <input type="checkbox" name="3" value="Y" {% for item in category %}{% if item == "3" %} checked {% endif %}{% endfor %}>
+                                <input type="checkbox" name="cat" value="3" {% for item in category %}{% if item == "3" %} checked {% endif %}{% endfor %}>
                                 <span class="custom-checkbox"></span>
                                 {% if "3" in category %}<span style="text-decoration: underline;">{% endif %}Entertainment{% if "3" in category %}</span>{% endif %}
                             </label>
                             <label>
-                                <input type="checkbox" name="4" value="Y" {% for item in category %}{% if item == "4" %}checked{% endif %}{% endfor %}>
+                                <input type="checkbox" name="cat" value="4" {% for item in category %}{% if item == "4" %}checked{% endif %}{% endfor %}>
                                 <span class="custom-checkbox"></span>
                                 {% if "4" in category %}<span style="text-decoration: underline;">{% endif %}Business{% if "4" in category %}</span>{% endif %}
                             </label>
@@ -246,31 +327,42 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             results = search_engine.raveQuery(category, query)
 
-            # Temporary hack till we clean our corpus
-            # its permanent now, shhhhh
-            prev_doc = ""
-            for item in results:
-                name, ratings = item
-                doc = search_engine.documents[name]
-                if doc == prev_doc:
-                    continue
-                prev_doc = doc
-                title = doc.splitlines()[0]
-                desc_line = doc.splitlines()[2]
-                content = "".join(doc.splitlines()[4:])
-                html_content += f"""
-                            <li>
-                                <div class="result-title">
-                                <details>
-                                    <summary>
-                                        <h3>{title}</h3>
-                                        <p>{desc_line}</p>                                         
-                                    </summary>
-                                    <p>{content}</p>
-                                </details>
-                                </div>
-                            </li>
+            if results == []:
+                html_content += """</ol>
+                    <div class="no-results">
+                        <img src="img/argonath.png" height="350px">
+                        <h2 style="font-family:oldenburg;"> Stop! You have exhausted us :} Perhaps try searching with a better query next time... </h2>
+                    </div>
+                    <ol>
                 """
+            else:
+                # Temporary hack till we clean our corpus
+                # its permanent now, shhhhh
+                prev_doc = ""
+                for item in results:
+                    name, ratings, cat = item
+                    label = labels_data[int(cat) + 1]
+                    doc = search_engine.documents[name]
+                    if doc == prev_doc:
+                        continue
+                    prev_doc = doc
+                    title = doc.splitlines()[0]
+                    desc_line = doc.splitlines()[2]
+                    content = "".join(doc.splitlines()[4:])
+                    html_content += f"""
+                                <li>
+                                    <div class="result-title">
+                                    <details>
+                                        <summary>
+                                            <h3>{title}</h3>
+                                            <p><i>[{label}]</i></p>
+                                            <p>{desc_line}</p>                                         
+                                        </summary>
+                                        <p>{content}</p>
+                                    </details>
+                                    </div>
+                                </li>
+                    """
             html_content += """
                         </ol>
                     </div>
@@ -290,6 +382,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(rendered_html.encode("utf-8"))
+
+        else:
+            serve_static(self)
 
 
 def run():
