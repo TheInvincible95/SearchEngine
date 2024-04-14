@@ -63,9 +63,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         # Store user chosen categories as cookie
         category = ""
-        for label in range(5):
-            if str(label) in query["cat"]:
-                category += str(label)
+        if "cat" in query:
+            for label in range(5):
+                if str(label) in query["cat"]:
+                    category += str(label)
         cookie_data = json.dumps(category)
 
         self.send_response(303)
@@ -278,6 +279,14 @@ class RequestHandler(BaseHTTPRequestHandler):
                         }
 
                     </style>
+                    <noscript>
+                        <style>
+                            .record-button,
+                            .record-button:hover {
+                                background-color: #959595;
+                            }
+                        </style>
+                    </noscript>
                 </head>
                 <body>
                     <a href="#" id="scroll-to-top"></a>
@@ -288,7 +297,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                         <button type="submit" class="search-button"><img src="img/magnifying-glass.png" height="16"></button>
                         <button type="button" class="record-button" onclick="toggleMic()"><img id="mic-img"
                             src="img/microphone-black-shape.png" height="16">
-                        <div id="timer">3</div>
+                        <div id="timer">3s</div>
                         </button>
                         <div class="category">
                             <label>
