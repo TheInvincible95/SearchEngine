@@ -72,8 +72,11 @@ class Searcher:
                 self.avgdl += len(d.term_freq)
         self.avgdl /= self.req_documents
 
-    def tf(self, term, doc):
+    def rel_tf(self, term, doc):
         return doc.term_freq.get(term, 0) / float(sum(doc.term_freq.values()))
+
+    def raw_tf(self, term, doc):
+        return doc.term_freq.get(term, 0)
 
     def idf(self, term):
         return log(
@@ -83,13 +86,13 @@ class Searcher:
         )
 
     # def tf_idf(self, term, doc):
-    #     return self.tf(term, doc) * self.idf(term)
+    #     return self.rel_tf(term, doc) * self.idf(term)
 
     def bm25_tf_idf(self, term, doc):
         return self.idf(term) * (
-            (self.tf(term, doc) * (self.k1 + 1))
+            (self.raw_tf(term, doc) * (self.k1 + 1))
             / (
-                self.tf(term, doc)
+                self.raw_tf(term, doc)
                 + self.k1 * ((1 - self.b) + self.b * len(doc.term_freq) / self.avgdl)
             )
         )
