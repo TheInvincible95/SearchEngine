@@ -31,7 +31,7 @@ function toggleMic() {
 
         saveSelections();
 
-        // Toggle mic to dot icon
+        // Toggle mic to dot icon with red bg
         micImg.src = "img/dot.png";
         micButton.style.backgroundColor = "red";
 
@@ -41,22 +41,23 @@ function toggleMic() {
         }, 500);
 
         // Notify python STT script to start
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "/trigger-STT", true);
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    var responseData = xhr.responseText;
-                    window.location.href = "/results?data=" + responseData;
-                } else {
-                    console.error("Error occurred:", xhr.status);
+        fetch("/trigger-STT", {
+            method: 'GET',
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
                 }
-            }
-        };
-        xhr.send();
+                return response.text();
+            })
+            .then(responseData => {
+                window.location.href = "/results?data=" + responseData;
+            })
+            .catch(error => {
+                console.error('Error occurred:', error);
+            });
 
         startTimer(micImg);
-
     }
 }
 
@@ -64,9 +65,9 @@ function saveSelections() {
     const checkboxes = document.querySelectorAll('input[name="cat"]:checked');
     const interests = Array.from(checkboxes).map(checkbox => checkbox.value);
 
-    const interestsString = JSON.stringify(interests);
+    const interestsString = JSON.stringify(interests.join(''));
 
     // Store the category in a cookie
-    document.cookie = `rave_cat_data=${interestsString}; path=/`;
+    document.cookie = `rave_cat_data=${interestsString}; path=/; SameSite=Strict`;
 
 }

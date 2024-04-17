@@ -71,7 +71,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         self.send_response(303)
         self.send_header("Content-type", "text/html")
-        self.send_header("Set-Cookie", f"rave_cat_data={cookie_data}")
+        self.send_header("Set-Cookie", f"rave_cat_data={cookie_data}; SameSite=Strict")
         self.send_header("Location", "/results?data=" + data)
         self.end_headers()
 
