@@ -88,6 +88,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                 )
                 stdout, stderr = process.communicate()
                 data = stdout.decode("utf-8").strip()
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
                 self.wfile.write(data.encode("utf-8"))
                 process = None
 
@@ -106,6 +109,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>rave Results</title>
                     <link rel="icon" type="image/png" href="img/magnifying-glass.png">
+                    <link rel="preload" as="image" href="img/dot.png">
                     <script src="script.js"></script>
                     <style>
                         body {
