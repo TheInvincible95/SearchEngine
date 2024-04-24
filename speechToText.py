@@ -11,7 +11,7 @@ def stt():
     # Start recorder with the set values of duration and sample frequency
     # and return a numpy array of the audio
 
-    recording = sd.rec(int(duration * freq), samplerate=freq, channels=2)
+    recording = sd.rec(int(duration * freq), samplerate=freq, channels=1)
 
     # Record audio for the set number of seconds
     sd.wait()
