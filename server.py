@@ -115,6 +115,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     results=results,
                     labels_data=labels_data,
                     documents=search_engine.documents,
+                    query=query,
                 )
                 self.wfile.write(rendered_html.encode("utf-8"))
 
